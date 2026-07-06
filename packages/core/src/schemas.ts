@@ -42,10 +42,23 @@ export const TimeoutConfigSchema = z.object({
 /**
  * Base server configuration (shared fields)
  */
+const ToolFilterSchema = z
+  .object({
+    include: z
+      .array(z.string())
+      .optional()
+      .describe('Only expose tools whose original name is in this list'),
+    exclude: z.array(z.string()).optional().describe('Hide tools whose original name is in this list')
+  })
+  .strict();
+
 const BaseServerConfigSchema = z.object({
   disabled: z.boolean().optional().default(false).describe('Whether this server is disabled'),
   timeouts: TimeoutConfigSchema.optional().describe('Server-specific timeout overrides'),
-  tags: z.array(z.string()).optional().describe('Tags for grouping servers')
+  tags: z.array(z.string()).optional().describe('Tags for grouping servers'),
+  tools: ToolFilterSchema.optional().describe(
+    'Filter which tools from this server are exposed (exclude wins over include)'
+  )
 });
 
 /**

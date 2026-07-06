@@ -25,6 +25,9 @@ export type ServerSpec = {
   keepAliveTimeout?: number; // Keep-alive timeout
   reconnect?: boolean;
   reconnectDelay?: number;
+
+  // Filter which of the server's tools are exposed (by original tool name)
+  toolFilter?: { include?: string[]; exclude?: string[] };
 };
 
 /**

@@ -149,6 +149,27 @@
               "type": "string"
             },
             "description": "Tags for grouping servers (e.g., \"dev\", \"production\", \"開発\")"
+          },
+          "tools": {
+            "type": "object",
+            "description": "Filter which tools from this server are exposed (exclude wins over include)",
+            "additionalProperties": false,
+            "properties": {
+              "include": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Only expose tools whose original name is in this list"
+              },
+              "exclude": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Hide tools whose original name is in this list"
+              }
+            }
           }
         }
       }

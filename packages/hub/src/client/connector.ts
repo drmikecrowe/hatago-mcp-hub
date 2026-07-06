@@ -133,6 +133,10 @@ export function normalizeServerSpec(config: ServerConfig): ServerSpec {
     spec.headers = config.headers;
   }
 
+  if (config.tools) {
+    spec.toolFilter = config.tools;
+  }
+
   if (config.timeouts) {
     spec.timeout = config.timeouts.requestMs;
     spec.connectTimeout = config.timeouts.connectMs;

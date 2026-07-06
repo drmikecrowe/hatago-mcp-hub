@@ -22,15 +22,46 @@ type RegistrarHub = {
   onNotification?: (n: JSONRPCMessage) => Promise<void>;
 };
 
+/**
+ * Filter a server's tools by original name.
+ * `include` (if non-empty) keeps only listed tools; `exclude` then drops listed
+ * tools, so exclude wins over include. No filter returns all tools unchanged.
+ */
+export function filterToolsByName<T extends { name: string }>(
+  tools: T[],
+  filter?: { include?: string[]; exclude?: string[] }
+): T[] {
+  if (!filter) return tools;
+  let result = tools;
+  if (filter.include && filter.include.length > 0) {
+    const include = new Set(filter.include);
+    result = result.filter((t) => include.has(t.name));
+  }
+  if (filter.exclude && filter.exclude.length > 0) {
+    const exclude = new Set(filter.exclude);
+    result = result.filter((t) => !exclude.has(t.name));
+  }
+  return result;
+}
+
 export async function registerServerTools(
   hub: RegistrarHub,
   client: Client,
   serverId: string,
-  requestTimeoutMs: number
+  requestTimeoutMs: number,
+  toolFilter?: { include?: string[]; exclude?: string[] }
 ): Promise<void> {
   try {
     const toolsResult = await client.listTools();
-    const toolArray = toolsResult.tools ?? [];
+    const allTools = toolsResult.tools ?? [];
+    const toolArray = filterToolsByName(allTools, toolFilter);
+
+    if (toolArray.length !== allTools.length) {
+      hub.logger.debug(
+        `[Hub] Tool filter for ${serverId}: exposing ${toolArray.length}/${allTools.length} tools`,
+        { excluded: allTools.filter((t) => !toolArray.includes(t)).map((t) => t.name) }
+      );
+    }
 
     hub.logger.debug(`[Hub] Registering ${toolArray.length} tools from ${serverId}`, {
       toolNames: toolArray.map((t) => t.name)

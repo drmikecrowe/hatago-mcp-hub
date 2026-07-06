@@ -312,7 +312,7 @@ export class HatagoHub {
           typeof (this.toolInvoker as { listTools?: unknown }).listTools === 'function',
         toolInvokerType: this.toolInvoker?.constructor?.name || 'unknown'
       });
-      await registerServerTools(this as never, client, id, requestTimeoutMs);
+      await registerServerTools(this as never, client, id, requestTimeoutMs, spec.toolFilter);
     }
 
     await registerServerResources(this as never, client, id);

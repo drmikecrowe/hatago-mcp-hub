@@ -390,6 +390,36 @@ Features:
 | **Management** | Centralized                 | Distributed                                  |
 | **Best for**   | Team sharing, Simple setups | Complex environments, Personal customization |
 
+### Per-Server Tool Filtering
+
+Some MCP servers expose many tools, all of which land in your client's context. Use the optional `tools` field on any server to expose only the tools you actually use. Filtering is by the server's **original** tool name (before Hatago prefixing) and happens at registration, so hidden tools never enter context and are not invocable.
+
+```json
+{
+  "mcpServers": {
+    "atlassian": {
+      "url": "https://mcp.atlassian.com/v1/sse",
+      "type": "sse",
+      "tools": {
+        "include": ["getJiraIssue", "searchJiraIssues", "createJiraIssue"]
+      }
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "tools": {
+        "exclude": ["delete_repository"]
+      }
+    }
+  }
+}
+```
+
+- `include` — expose only these tools (allow-list). Omit to start from all tools.
+- `exclude` — hide these tools (deny-list).
+- If both are set, `exclude` is applied after `include`, so **exclude wins**.
+- Omitting `tools` entirely exposes all of the server's tools (unchanged default).
+
 ### Environment Variable Expansion
 
 Supports Claude Code compatible syntax:
