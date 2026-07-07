@@ -26,8 +26,13 @@ export type ServerSpec = {
   reconnect?: boolean;
   reconnectDelay?: number;
 
-  // Filter which of the server's tools are exposed (by original tool name)
-  toolFilter?: { include?: string[]; exclude?: string[] };
+  // Filter which of the server's tools are exposed (by original tool name),
+  // and optionally override the exposed name/description per tool.
+  toolFilter?: {
+    include?: string[];
+    exclude?: string[];
+    overrides?: Record<string, { name?: string; description?: string }>;
+  };
 };
 
 /**

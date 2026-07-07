@@ -155,6 +155,43 @@ const schema = {
             type: 'array',
             items: { type: 'string' },
             description: 'Tags for grouping servers (e.g., "dev", "production", "開発")'
+          },
+          tools: {
+            type: 'object',
+            description:
+              'Filter which tools from this server are exposed (exclude wins over include) and optionally override their name/description',
+            additionalProperties: false,
+            properties: {
+              include: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Only expose tools whose original name is in this list'
+              },
+              exclude: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Hide tools whose original name is in this list'
+              },
+              overrides: {
+                type: 'object',
+                description: 'Per-tool name/description overrides, keyed by original tool name',
+                additionalProperties: {
+                  type: 'object',
+                  additionalProperties: false,
+                  properties: {
+                    name: {
+                      type: 'string',
+                      description: 'Rename the exposed tool (still prefixed with the server id)'
+                    },
+                    description: {
+                      type: 'string',
+                      description:
+                        'Description template shown to clients; {description} expands to the upstream description. Omit the placeholder for a full replacement.'
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }

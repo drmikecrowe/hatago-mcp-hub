@@ -420,6 +420,46 @@ Some MCP servers expose many tools, all of which land in your client's context. 
 - If both are set, `exclude` is applied after `include`, so **exclude wins**.
 - Omitting `tools` entirely exposes all of the server's tools (unchanged default).
 
+### Per-Server Tool Overrides
+
+When you attach **two instances of the same server** (e.g. two Atlassian servers pointing at different Confluence instances), Hatago already keeps their tools from colliding by prefixing each with the server id (`serverId_toolName`). But the two instances still expose identical descriptions, so an LLM can't tell them apart. Use `tools.overrides` — keyed by the **original** tool name — to rename a tool and/or rewrite its description per instance:
+
+```json
+{
+  "mcpServers": {
+    "confluence-internal": {
+      "command": "npx",
+      "args": ["-y", "mcp-atlassian"],
+      "tools": {
+        "overrides": {
+          "createConfluencePage": {
+            "name": "create_internal_page",
+            "description": "For the INTERNAL engineering Confluence. {description}"
+          }
+        }
+      }
+    },
+    "confluence-customer": {
+      "command": "npx",
+      "args": ["-y", "mcp-atlassian"],
+      "tools": {
+        "overrides": {
+          "createConfluencePage": {
+            "name": "create_customer_page",
+            "description": "For the CUSTOMER-facing Confluence instance. {description}"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+- `name` — renames the exposed tool. The server-id prefix is still applied, so the result is `serverId_<name>` (e.g. `confluence_customer_create_customer_page`). Omit to keep the original name.
+- `description` — a **template**: the placeholder `{description}` expands to the tool's upstream description, letting you _augment_ it (`"For the INTERNAL Confluence. {description}"`). A string with no placeholder fully replaces the description. Omit to keep the upstream text unchanged.
+- Overrides are metadata only — the tool is still relayed to the underlying server under its original name.
+- Combine with `include` / `exclude`: filtering runs first, then overrides apply to whatever remains.
+
 ### Environment Variable Expansion
 
 Supports Claude Code compatible syntax:

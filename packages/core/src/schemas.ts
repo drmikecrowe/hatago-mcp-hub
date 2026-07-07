@@ -42,13 +42,35 @@ export const TimeoutConfigSchema = z.object({
 /**
  * Base server configuration (shared fields)
  */
+const ToolOverrideSchema = z
+  .object({
+    name: z
+      .string()
+      .optional()
+      .describe('Rename the exposed tool (still prefixed with the server id)'),
+    description: z
+      .string()
+      .optional()
+      .describe(
+        'Description template shown to clients; {description} expands to the upstream description. Omit the placeholder for a full replacement.'
+      )
+  })
+  .strict();
+
 const ToolFilterSchema = z
   .object({
     include: z
       .array(z.string())
       .optional()
       .describe('Only expose tools whose original name is in this list'),
-    exclude: z.array(z.string()).optional().describe('Hide tools whose original name is in this list')
+    exclude: z
+      .array(z.string())
+      .optional()
+      .describe('Hide tools whose original name is in this list'),
+    overrides: z
+      .record(ToolOverrideSchema)
+      .optional()
+      .describe('Per-tool name/description overrides, keyed by original tool name')
   })
   .strict();
 

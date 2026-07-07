@@ -168,6 +168,80 @@ hatago serve --tags dev,api
 
 The above will load servers that contain at least one of the provided tags (`dev` OR `api`). If `--tags` is omitted, all non-disabled servers are loaded.
 
+## Tool Filtering and Overrides
+
+The optional `tools` field on any server lets you control which of that server's tools are exposed and how they are presented. Both filtering and overrides key off the server's **original** tool name (before Hatago prefixing) and are applied at registration, so hidden tools never enter your client's context.
+
+### Filtering (`include` / `exclude`)
+
+Some MCP servers expose many tools, all of which land in your client's context. Filter them down:
+
+```json
+{
+  "mcpServers": {
+    "atlassian": {
+      "url": "https://mcp.atlassian.com/v1/sse",
+      "type": "sse",
+      "tools": {
+        "include": ["getJiraIssue", "searchJiraIssues", "createJiraIssue"]
+      }
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "tools": {
+        "exclude": ["delete_repository"]
+      }
+    }
+  }
+}
+```
+
+- `include` — expose only these tools (allow-list). Omit to start from all tools.
+- `exclude` — hide these tools (deny-list).
+- If both are set, `exclude` is applied after `include`, so **exclude wins**.
+- Omitting `tools` entirely exposes all of the server's tools (the default).
+
+### Overrides (`overrides`)
+
+When you attach two instances of the same server (for example, two Atlassian servers pointing at different Confluence instances), Hatago already prevents name collisions by prefixing every tool with the server id (`serverId_toolName`). But the instances still expose identical descriptions, so an LLM cannot tell them apart. Use `overrides` — keyed by the original tool name — to rename a tool and/or rewrite its description per instance:
+
+```json
+{
+  "mcpServers": {
+    "confluence-internal": {
+      "command": "npx",
+      "args": ["-y", "mcp-atlassian"],
+      "tools": {
+        "overrides": {
+          "createConfluencePage": {
+            "name": "create_internal_page",
+            "description": "For the INTERNAL engineering Confluence. {description}"
+          }
+        }
+      }
+    },
+    "confluence-customer": {
+      "command": "npx",
+      "args": ["-y", "mcp-atlassian"],
+      "tools": {
+        "overrides": {
+          "createConfluencePage": {
+            "name": "create_customer_page",
+            "description": "For the CUSTOMER-facing Confluence instance. {description}"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+- `name` — renames the exposed tool. The server-id prefix is still applied, so the result is `serverId_<name>`. Omit to keep the original name portion.
+- `description` — a **template**. The placeholder `{description}` expands to the tool's upstream description, so you can _augment_ it (`"For the INTERNAL Confluence. {description}"`). A string with no placeholder fully replaces the description. Omit to keep the upstream text unchanged.
+- Overrides are metadata only — the tool is still relayed to the underlying server under its original name.
+- Filtering runs first; overrides then apply to whatever tools remain.
+
 ## Configuration Inheritance
 
 The `extends` field allows you to inherit settings from parent configuration files, enabling DRY (Don't Repeat Yourself) principles and cleaner environment-specific configurations.
@@ -335,17 +409,18 @@ Each server in `mcpServers` can be configured as either a local/NPX server or a 
 
 ### Server Configuration Fields
 
-| Field      | Type     | Description                                 | Required                 |
-| ---------- | -------- | ------------------------------------------- | ------------------------ |
-| `command`  | string   | Command to execute (local/NPX)              | Yes (local)              |
-| `args`     | string[] | Command arguments                           | No                       |
-| `env`      | object   | Environment variables                       | No                       |
-| `cwd`      | string   | Working directory                           | No (default: config dir) |
-| `url`      | string   | Server URL (remote)                         | Yes (remote)             |
-| `type`     | string   | Remote server type: "http" or "sse"         | No (default: "http")     |
-| `headers`  | object   | HTTP headers (remote)                       | No                       |
-| `disabled` | boolean  | Disable this server                         | No (default: false)      |
-| `tags`     | string[] | Optional tags for server grouping/filtering | No                       |
+| Field      | Type     | Description                                                                    | Required                 |
+| ---------- | -------- | ------------------------------------------------------------------------------ | ------------------------ |
+| `command`  | string   | Command to execute (local/NPX)                                                 | Yes (local)              |
+| `args`     | string[] | Command arguments                                                              | No                       |
+| `env`      | object   | Environment variables                                                          | No                       |
+| `cwd`      | string   | Working directory                                                              | No (default: config dir) |
+| `url`      | string   | Server URL (remote)                                                            | Yes (remote)             |
+| `type`     | string   | Remote server type: "http" or "sse"                                            | No (default: "http")     |
+| `headers`  | object   | HTTP headers (remote)                                                          | No                       |
+| `disabled` | boolean  | Disable this server                                                            | No (default: false)      |
+| `tags`     | string[] | Optional tags for server grouping/filtering                                    | No                       |
+| `tools`    | object   | Tool filtering (`include`/`exclude`) and per-tool name/description `overrides` | No                       |
 
 ## Environment Variable Expansion
 
