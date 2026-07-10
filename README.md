@@ -58,13 +58,22 @@ Hatago MCP Hub is a lightweight hub that unifies access to multiple MCP (Model C
 
 #### Built-in Internal Resource
 
-- `hatago://servers` - JSON snapshot of currently connected servers (id, status, type, tools, resources, prompts)
+- `hatago://servers` - JSON snapshot of currently connected servers (id, `description`, status, type, tools, resources, prompts). The optional per-server `description` field is a routing hint an agent can read _before_ issuing any call. See [Server Descriptions](docs/configuration.md#server-descriptions-routing-hints).
+
+#### Per-server Skills (`skill://`)
+
+- Add a `skills` directory to any server and Hatago exposes each skill as a `skill://<serverId>/<name>` resource in `resources/list`, so any connecting agent discovers it immediately. Skills share the server's lifecycle (removed when it disconnects/disables) and appear under it in the manifest. Supports both flat `<name>.md` files and the `<name>/SKILL.md` directory convention. See [Local Skills](docs/configuration.md#local-skills).
+
+#### Server Instructions
+
+- Give any server an `instructions` string (or `{ "file": "..." }`); Hatago aggregates active servers' instructions into its `initialize.instructions` so a connecting agent receives the guidance at session start (Claude Code loads server instructions on connect). Keep it lean — Claude Code truncates at 2KB total. See [Server Instructions](docs/configuration.md#server-instructions).
 
 #### Enhanced Features
 
 - **Environment Variable Expansion** - Claude Code compatible `${VAR}` and `${VAR:-default}` syntax
 - **Configuration Validation** - Type-safe configuration with Zod schemas
 - **Tag-based Server Filtering** - Group and filter servers using tags
+- **Per-server Tool Filtering & Overrides** - Choose which upstream tools are exposed and rename/retitle them per server (`tools.include` / `exclude` / `overrides`)
 - **Configuration Inheritance** - Extend base configurations with `extends` field for DRY principle
 
 ### Minimal Hub Interface (IHub)
@@ -389,6 +398,76 @@ Features:
 | **Switch**     | `--tags` option             | `--config` option                            |
 | **Management** | Centralized                 | Distributed                                  |
 | **Best for**   | Team sharing, Simple setups | Complex environments, Personal customization |
+
+### Per-Server Tool Filtering
+
+Some MCP servers expose many tools, all of which land in your client's context. Use the optional `tools` field on any server to expose only the tools you actually use. Filtering is by the server's **original** tool name (before Hatago prefixing) and happens at registration, so hidden tools never enter context and are not invocable.
+
+```json
+{
+  "mcpServers": {
+    "atlassian": {
+      "url": "https://mcp.atlassian.com/v1/sse",
+      "type": "sse",
+      "tools": {
+        "include": ["getJiraIssue", "searchJiraIssues", "createJiraIssue"]
+      }
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "tools": {
+        "exclude": ["delete_repository"]
+      }
+    }
+  }
+}
+```
+
+- `include` — expose only these tools (allow-list). Omit to start from all tools.
+- `exclude` — hide these tools (deny-list).
+- If both are set, `exclude` is applied after `include`, so **exclude wins**.
+- Omitting `tools` entirely exposes all of the server's tools (unchanged default).
+
+### Per-Server Tool Overrides
+
+When you attach **two instances of the same server** (e.g. two Atlassian servers pointing at different Confluence instances), Hatago already keeps their tools from colliding by prefixing each with the server id (`serverId_toolName`). But the two instances still expose identical descriptions, so an LLM can't tell them apart. Use `tools.overrides` — keyed by the **original** tool name — to rename a tool and/or rewrite its description per instance:
+
+```json
+{
+  "mcpServers": {
+    "confluence-internal": {
+      "command": "npx",
+      "args": ["-y", "mcp-atlassian"],
+      "tools": {
+        "overrides": {
+          "createConfluencePage": {
+            "name": "create_internal_page",
+            "description": "For the INTERNAL engineering Confluence. {description}"
+          }
+        }
+      }
+    },
+    "confluence-customer": {
+      "command": "npx",
+      "args": ["-y", "mcp-atlassian"],
+      "tools": {
+        "overrides": {
+          "createConfluencePage": {
+            "name": "create_customer_page",
+            "description": "For the CUSTOMER-facing Confluence instance. {description}"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+- `name` — renames the exposed tool. The server-id prefix is still applied, so the result is `serverId_<name>` (e.g. `confluence_customer_create_customer_page`). Omit to keep the original name.
+- `description` — a **template**: the placeholder `{description}` expands to the tool's upstream description, letting you _augment_ it (`"For the INTERNAL Confluence. {description}"`). A string with no placeholder fully replaces the description. Omit to keep the upstream text unchanged.
+- Overrides are metadata only — the tool is still relayed to the underlying server under its original name.
+- Combine with `include` / `exclude`: filtering runs first, then overrides apply to whatever remains.
 
 ### Environment Variable Expansion
 
