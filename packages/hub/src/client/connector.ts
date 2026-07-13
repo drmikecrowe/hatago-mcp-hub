@@ -55,11 +55,7 @@ export async function connectWithRetry(args: {
           version: HATAGO_VERSION
         },
         {
-          capabilities: {
-            tools: {},
-            resources: {},
-            prompts: {}
-          }
+          capabilities: {}
         }
       );
 
