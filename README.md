@@ -484,6 +484,68 @@ When you attach **two instances of the same server** (e.g. two Atlassian servers
 - Overrides are metadata only — the tool is still relayed to the underlying server under its original name.
 - Combine with `include` / `exclude`: filtering runs first, then overrides apply to whatever remains.
 
+### Server Instructions
+
+A server `description` only helps an agent that reads the `hatago://servers` manifest. To **push** guidance to the agent at connect time instead, set the optional `instructions` field on any server — Hatago aggregates every active server's instructions into its own `initialize.instructions` (Claude Code loads this at session start, same as a system-prompt addition).
+
+```json
+{
+  "mcpServers": {
+    "confluence-primary": {
+      "url": "https://example.atlassian.net/mcp",
+      "type": "sse",
+      "instructions": "For product-strategy or platform questions, search this server first."
+    },
+    "jira": {
+      "url": "https://example.atlassian.net/mcp",
+      "type": "sse",
+      "instructions": { "file": "./instructions/jira.md" }
+    }
+  }
+}
+```
+
+- Accepts a literal string or a `{ "file": "..." }` reference, resolved against the config file's directory.
+- **2KB aggregate budget, enforced.** Claude Code sees Hatago as a single server and truncates its instructions at 2KB total across every active server — Hatago fails startup with an error if the combined text exceeds that, rather than silently truncating. Keep each server's text short.
+- A `{ file }` path must resolve **within** the config directory; out-of-tree paths are skipped with a warning.
+- See [Server Instructions](docs/configuration.md#server-instructions) for the full contract.
+
+### Per-Server Skills
+
+A **skill** is a markdown document that Hatago binds to one MCP server and exposes to connecting agents as a `skill://<serverId>/<name>` resource — discoverable via `resources/list` with no server call required. Use it for guidance on _how to use_ a particular server (a routing guide, a reference doc, worked examples).
+
+Point a server's `skills` field at a directory:
+
+```json
+{
+  "mcpServers": {
+    "confluence-primary": {
+      "url": "https://example.atlassian.net/mcp",
+      "type": "sse",
+      "skills": "./skills/confluence-primary"
+    }
+  }
+}
+```
+
+Each skill is either a flat `<dir>/<name>.md` file or a `<dir>/<name>/SKILL.md` directory (the Claude Code convention), with required YAML frontmatter:
+
+```markdown
+---
+name: kb-router
+description: Routes strategy questions to the primary knowledge base. Read first when unsure which Atlassian server to search.
+---
+
+# Knowledge Base Router
+
+For anything about product strategy or the platform, search this server first...
+```
+
+- Skills are namespaced per server (`skill://confluence-primary/kb-router`), so two servers can reuse the same skill name without collision.
+- They share their server's lifecycle — registered on connect, removed on disconnect/disable/`--tags` filter-out.
+- The `skills` path must resolve **within** the config directory (symlinks are followed, so an external directory can be linked in).
+- See [Local Skills](docs/configuration.md#local-skills) for the full contract.
+
 ### Environment Variable Expansion
 
 Supports Claude Code compatible syntax:
