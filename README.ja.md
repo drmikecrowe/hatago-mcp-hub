@@ -12,6 +12,16 @@
 
 Hatago MCP Hubは、複数のMCP（Model Context Protocol）サーバーを統合管理する軽量なハブサーバーです。Claude Code、Codex CLI、Cursor、Windsurf、VS Codeなどの開発ツールから、さまざまなMCPサーバーを一元的に利用できます。
 
+## 🆕 新機能: 接続先のMCPサーバーに手を加えずカスタマイズ
+
+Hatagoは、ハブ層だけで接続先のMCPサーバーが公開する内容やエージェントの使い方を変更できるようになりました。アップストリームのサーバー自体は一切変更不要です。
+
+- **📝 サーバー指示（instructions）** — サーバーに `instructions` 文字列（またはファイル）を設定すると、Hatago がそれらを集約して `initialize.instructions` として返すため、接続時にエージェントへ自動的にガイダンスが渡ります。詳細は [Server Instructions](docs/configuration.md#server-instructions) を参照してください。
+- **🧠 サーバー単位のスキル（`skill://`）** — サーバーに `skills` ディレクトリを指定すると、各スキルが `skill://<serverId>/<name>` リソースとして公開され、接続したエージェントがすぐに発見できます。サーバーの使い方をエージェントに軽量に教える手段です。詳細は [Local Skills](docs/configuration.md#local-skills) を参照してください。
+- **🎛️ ツールフィルタリング＆上書き** — `tools.include` / `exclude` で公開する upstream ツールを絞り込み、`tools.overrides` で名前や説明をサーバーごとに書き換えられます。重複したツールやノイズの多いツール群をクライアントのコンテキストから排除できます。詳細は [Tool Filtering and Overrides](docs/configuration.md#tool-filtering-and-overrides) を参照してください。
+
+いずれもオプションでデフォルトは無効のため、既存の設定はそのまま動作します。
+
 [Zenn: Hatago MCP Hub で始めるマルチMCP運用 - ひとつの設定で全部つながる](https://zenn.dev/himorishige/articles/introduce-hatago-mcp-hub)
 
 ## ドキュメント

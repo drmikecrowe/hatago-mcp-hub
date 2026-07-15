@@ -12,6 +12,16 @@
 
 Hatago MCP Hub is a lightweight hub that unifies access to multiple MCP (Model Context Protocol) servers from tools like Claude Code, Codex CLI, Cursor, Windsurf, and VS Code.
 
+## 🆕 New: Customize Any MCP Server Without Touching It
+
+Hatago now lets you reshape what a connected MCP server exposes and how agents use it — purely at the hub layer, with zero changes to the upstream server:
+
+- **📝 Server Instructions** — Attach an `instructions` string (or file) to any server; Hatago aggregates them into `initialize.instructions` so agents get that guidance automatically at connect time. See [Server Instructions](docs/configuration.md#server-instructions).
+- **🧠 Per-server Skills (`skill://`)** — Drop a `skills` directory on a server and Hatago publishes each one as a `skill://<serverId>/<name>` resource, discoverable by any connecting agent — a lightweight way to teach agents how to use that server. See [Local Skills](docs/configuration.md#local-skills).
+- **🎛️ Tool Filtering & Overrides** — Choose exactly which upstream tools are exposed (`tools.include` / `exclude`) and rename or enrich their descriptions per server (`tools.overrides`), so duplicate or noisy tool sets stay clean in your client's context. See [Tool Filtering and Overrides](docs/configuration.md#tool-filtering-and-overrides).
+
+All three are optional and off by default — existing configs behave exactly as before.
+
 ## Documentation
 
 - Docs index: `docs/README.md`
