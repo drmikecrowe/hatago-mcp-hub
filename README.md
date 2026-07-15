@@ -21,9 +21,9 @@ Hatago MCP Hub is a lightweight hub that unifies access to multiple MCP (Model C
 
 Hatago now lets you reshape what a connected MCP server exposes and how agents use it — purely at the hub layer, with zero changes to the upstream server:
 
-- **📝 Server Instructions** — Attach an `instructions` string (or file) to any server; Hatago aggregates them into `initialize.instructions` so agents get that guidance automatically at connect time. See [Server Instructions](docs/configuration.md#server-instructions).
-- **🧠 Per-server Skills (`skill://`)** — Drop a `skills` directory on a server and Hatago publishes each one as a `skill://<serverId>/<name>` resource, discoverable by any connecting agent — a lightweight way to teach agents how to use that server. See [Local Skills](docs/configuration.md#local-skills).
-- **🎛️ Tool Filtering & Overrides** — Choose exactly which upstream tools are exposed (`tools.include` / `exclude`) and rename or enrich their descriptions per server (`tools.overrides`), so duplicate or noisy tool sets stay clean in your client's context. See [Tool Filtering and Overrides](docs/configuration.md#tool-filtering-and-overrides).
+- **🧠 Per-server Skills (`skill://`)** — Drop a `skills` directory on a server and Hatago publishes each one as a `skill://<serverId>/<name>` resource, discoverable by any connecting agent — a lightweight way to teach agents how to use that server. See [Per-Server Skills](#per-server-skills) below.
+- **📝 Server Instructions** — Attach an `instructions` string (or file) to any server; Hatago aggregates them into `initialize.instructions` so agents get that guidance automatically at connect time — and can point them at a skill for the details. See [Server Instructions](#server-instructions) below.
+- **🎛️ Tool Filtering & Overrides** — Choose exactly which upstream tools are exposed (`tools.include` / `exclude`) and rename or enrich their descriptions per server (`tools.overrides`), so duplicate or noisy tool sets stay clean in your client's context. See [Per-Server Tool Filtering](#per-server-tool-filtering) below.
 
 All three are optional and off by default — existing configs behave exactly as before.
 
@@ -484,32 +484,6 @@ When you attach **two instances of the same server** (e.g. two Atlassian servers
 - Overrides are metadata only — the tool is still relayed to the underlying server under its original name.
 - Combine with `include` / `exclude`: filtering runs first, then overrides apply to whatever remains.
 
-### Server Instructions
-
-A server `description` only helps an agent that reads the `hatago://servers` manifest. To **push** guidance to the agent at connect time instead, set the optional `instructions` field on any server — Hatago aggregates every active server's instructions into its own `initialize.instructions` (Claude Code loads this at session start, same as a system-prompt addition).
-
-```json
-{
-  "mcpServers": {
-    "confluence-primary": {
-      "url": "https://example.atlassian.net/mcp",
-      "type": "sse",
-      "instructions": "For product-strategy or platform questions, search this server first."
-    },
-    "jira": {
-      "url": "https://example.atlassian.net/mcp",
-      "type": "sse",
-      "instructions": { "file": "./instructions/jira.md" }
-    }
-  }
-}
-```
-
-- Accepts a literal string or a `{ "file": "..." }` reference, resolved against the config file's directory.
-- **2KB aggregate budget, enforced.** Claude Code sees Hatago as a single server and truncates its instructions at 2KB total across every active server — Hatago fails startup with an error if the combined text exceeds that, rather than silently truncating. Keep each server's text short.
-- A `{ file }` path must resolve **within** the config directory; out-of-tree paths are skipped with a warning.
-- See [Server Instructions](docs/configuration.md#server-instructions) for the full contract.
-
 ### Per-Server Skills
 
 A **skill** is a markdown document that Hatago binds to one MCP server and exposes to connecting agents as a `skill://<serverId>/<name>` resource — discoverable via `resources/list` with no server call required. Use it for guidance on _how to use_ a particular server (a routing guide, a reference doc, worked examples).
@@ -545,6 +519,34 @@ For anything about product strategy or the platform, search this server first...
 - They share their server's lifecycle — registered on connect, removed on disconnect/disable/`--tags` filter-out.
 - The `skills` path must resolve **within** the config directory (symlinks are followed, so an external directory can be linked in).
 - See [Local Skills](docs/configuration.md#local-skills) for the full contract.
+
+### Server Instructions
+
+A server `description` only helps an agent that reads the `hatago://servers` manifest. To **push** guidance to the agent at connect time instead, set the optional `instructions` field on any server — Hatago aggregates every active server's instructions into its own `initialize.instructions` (Claude Code loads this at session start, same as a system-prompt addition).
+
+```json
+{
+  "mcpServers": {
+    "confluence-primary": {
+      "url": "https://example.atlassian.net/mcp",
+      "type": "sse",
+      "instructions": "For product-strategy or platform questions, search this server first — see the kb-router skill for detailed routing rules.",
+      "skills": "./skills/confluence-primary"
+    },
+    "jira": {
+      "url": "https://example.atlassian.net/mcp",
+      "type": "sse",
+      "instructions": { "file": "./instructions/jira.md" }
+    }
+  }
+}
+```
+
+- Accepts a literal string or a `{ "file": "..." }` reference, resolved against the config file's directory.
+- **Use it to redirect, not to duplicate.** Instructions share Claude Code's 2KB *aggregate* budget across every active server, while skills are only loaded when an agent reads them. Keep the instructions text itself to a one-line pointer — `"See the kb-router skill before routing questions here."` — and put the actual detail in the skill.
+- **2KB aggregate budget, enforced.** Hatago fails startup with an error if the combined text exceeds that, rather than silently truncating. Keep each server's text short.
+- A `{ file }` path must resolve **within** the config directory; out-of-tree paths are skipped with a warning.
+- See [Server Instructions](docs/configuration.md#server-instructions) for the full contract.
 
 ### Environment Variable Expansion
 
