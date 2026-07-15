@@ -420,6 +420,7 @@ Some MCP servers expose many tools, all of which land in your client's context. 
 
 ```json
 {
+  "$schema": "https://raw.githubusercontent.com/drmikecrowe/hatago-mcp-hub/main/schemas/config.schema.json",
   "mcpServers": {
     "atlassian": {
       "url": "https://mcp.atlassian.com/v1/sse",
@@ -450,6 +451,7 @@ When you attach **two instances of the same server** (e.g. two Atlassian servers
 
 ```json
 {
+  "$schema": "https://raw.githubusercontent.com/drmikecrowe/hatago-mcp-hub/main/schemas/config.schema.json",
   "mcpServers": {
     "confluence-internal": {
       "command": "npx",
@@ -492,6 +494,7 @@ Point a server's `skills` field at a directory:
 
 ```json
 {
+  "$schema": "https://raw.githubusercontent.com/drmikecrowe/hatago-mcp-hub/main/schemas/config.schema.json",
   "mcpServers": {
     "confluence-primary": {
       "url": "https://example.atlassian.net/mcp",
@@ -526,6 +529,7 @@ A server `description` only helps an agent that reads the `hatago://servers` man
 
 ```json
 {
+  "$schema": "https://raw.githubusercontent.com/drmikecrowe/hatago-mcp-hub/main/schemas/config.schema.json",
   "mcpServers": {
     "confluence-primary": {
       "url": "https://example.atlassian.net/mcp",
