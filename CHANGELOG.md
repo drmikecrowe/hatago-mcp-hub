@@ -5,6 +5,12 @@ All notable changes to Hatago MCP Hub will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2026-07-15
+
+### Documentation
+
+- README: documented the OAuth-only remote server pattern — why `mcp-remote` (a local `command`/`args` bridge) is required for servers needing interactive OAuth, since Hatago's `url`/`type` remote transport only forwards static headers. Added a composite real-world example combining `description`, `instructions`, `skills`, and `tools.overrides` on a single server.
+
 ## [0.1.0] - 2026-07-15
 
 ### Added

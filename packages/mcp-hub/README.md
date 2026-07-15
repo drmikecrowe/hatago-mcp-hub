@@ -224,6 +224,46 @@ Create a `hatago.config.json`:
 }
 ```
 
+### OAuth-Only Remote Servers (`mcp-remote`)
+
+`url`/`type: "http" | "sse"` only forwards a **static** `headers` map (bearer token, API key) — Hatago has no OAuth client (no dynamic client registration, no browser consent, no token cache). A remote MCP server that requires interactive OAuth, such as Atlassian's hosted MCP endpoint, can't be reached with a bare `url` entry. Bridge it instead by running [`mcp-remote`](https://www.npmjs.com/package/mcp-remote) as a local process via `command`/`args`; it owns the OAuth handshake and token cache, and Hatago talks STDIO to it like any other local server:
+
+```json
+{
+  "mcpServers": {
+    "confluence-internal": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://mcp.atlassian.com/v1/mcp",
+        "--resource",
+        "https://your-org.atlassian.net"
+      ],
+      "tags": ["atlassian", "confluence"],
+      "description": "Internal engineering Confluence (your-org.atlassian.net) — team documentation, onboarding, architecture, and processes. Read-only. ALWAYS invoke the kb-router skill first — it maps intent to the exact right page without manual searching.",
+      "instructions": "When answering a question that internal documentation might cover, read the kb-router resource before calling any confluence-internal tool: ListMcpResourcesTool(server=\"confluence-internal\") → URI skill://confluence-internal/kb-router. Follow its instructions. Use confluence-internal search/fetch tools only when the router explicitly falls back to them.",
+      "skills": "./skills",
+      "tools": {
+        "include": ["fetch", "search", "getConfluencePage", "getConfluenceSpaces", "searchConfluenceUsingCql"],
+        "overrides": {
+          "search": {
+            "name": "searchInternal",
+            "description": "REQUIRED: Read the kb-router resource first: ListMcpResourcesTool(server=\"confluence-internal\"). Only use this tool as a fallback if the skill instructs it. {description}"
+          },
+          "fetch": {
+            "name": "fetchInternal",
+            "description": "Retrieves from the internal engineering Confluence instance. {description}"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+What each field buys you, in the order an agent hits them: `command`/`args` (mcp-remote) is the only way in given the OAuth requirement; `description` is a passive routing hint read via `hatago://servers`; `instructions` is pushed into `initialize.instructions` at connect so the agent is told up front to check the router skill; `skills` holds the actual routing logic as a `skill://confluence-internal/kb-router` resource, pulled on demand instead of bloating the 2KB instructions budget; `tools.overrides` renames `search`/`fetch` and repeats the "read the router first" gate in the tool description itself — the last line of defense if earlier steps were skipped. See [docs/configuration.md](https://github.com/drmikecrowe/hatago-mcp-hub/blob/main/docs/configuration.md) for the full contract on `skills`, `instructions`, and `tools.overrides`.
+
 ### Configuration Inheritance
 
 Hatago supports configuration inheritance through the `extends` field:
