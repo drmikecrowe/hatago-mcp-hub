@@ -1,22 +1,25 @@
-# @himorishige/hatago-mcp-hub
+# @drmikecrowe/hatago-mcp-hub
 
-[![npm](https://img.shields.io/npm/v/@himorishige/hatago-mcp-hub?logo=npm&color=cb0000)](https://www.npmjs.com/package/@himorishige/hatago-mcp-hub)
-[![GitHub Release](https://img.shields.io/github/v/release/himorishige/hatago-mcp-hub?display_name=tag&sort=semver)](https://github.com/himorishige/hatago-mcp-hub/releases)
+[![npm](https://img.shields.io/npm/v/@drmikecrowe/hatago-mcp-hub?logo=npm&color=cb0000)](https://www.npmjs.com/package/@drmikecrowe/hatago-mcp-hub)
+[![GitHub Release](https://img.shields.io/github/v/release/drmikecrowe/hatago-mcp-hub?display_name=tag&sort=semver)](https://github.com/drmikecrowe/hatago-mcp-hub/releases)
 
 Unified MCP (Model Context Protocol) Hub for managing multiple MCP servers. Works with Claude Code, Codex CLI, Cursor, Windsurf, VS Code and other MCP-compatible tools.
+
+> [!NOTE]
+> **This is a fork of [himorishige/hatago-mcp-hub](https://github.com/himorishige/hatago-mcp-hub)**, created by [Hiroshi Morishige (@himorishige)](https://github.com/himorishige). Full credit for Hatago's original design, architecture, and "thin implementation" philosophy belongs to the upstream project — this fork only layers optional customization features (server instructions, per-server skills, tool filtering/overrides) on top of it. If upstream adopts these (or equivalent) features, this fork will converge back to track upstream as the canonical source.
 
 ## Quick Start
 
 ```bash
 # Initialize configuration
-npx @himorishige/hatago-mcp-hub init
+npx @drmikecrowe/hatago-mcp-hub init
 
 # Start server in STDIO mode (for Claude Code)
 # NOTE: STDIO mode requires a config file path
-npx @himorishige/hatago-mcp-hub serve --stdio --config ./hatago.config.json
+npx @drmikecrowe/hatago-mcp-hub serve --stdio --config ./hatago.config.json
 
 # Start server in HTTP mode (for development/debugging)
-npx @himorishige/hatago-mcp-hub serve --http --port 3535
+npx @drmikecrowe/hatago-mcp-hub serve --http --port 3535
 ```
 
 ## Installation
@@ -25,14 +28,14 @@ npx @himorishige/hatago-mcp-hub serve --http --port 3535
 
 ```bash
 # Use directly with npx (no installation needed)
-npx @himorishige/hatago-mcp-hub init
+npx @drmikecrowe/hatago-mcp-hub init
 # STDIO requires config
-npx @himorishige/hatago-mcp-hub serve --stdio --config ./hatago.config.json
+npx @drmikecrowe/hatago-mcp-hub serve --stdio --config ./hatago.config.json
 # Or HTTP without config (for demo/dev)
-npx @himorishige/hatago-mcp-hub serve --http
+npx @drmikecrowe/hatago-mcp-hub serve --http
 
 # Or install globally
-npm install -g @himorishige/hatago-mcp-hub
+npm install -g @drmikecrowe/hatago-mcp-hub
 hatago init
 hatago serve
 ```
@@ -40,7 +43,7 @@ hatago serve
 ### As a Project Dependency
 
 ```bash
-npm install @himorishige/hatago-mcp-hub
+npm install @drmikecrowe/hatago-mcp-hub
 ```
 
 ## Commands
@@ -102,7 +105,7 @@ Add to your `.mcp.json`:
     "hatago": {
       "command": "npx",
       "args": [
-        "@himorishige/hatago-mcp-hub",
+        "@drmikecrowe/hatago-mcp-hub",
         "serve",
         "--stdio",
         "--config",
@@ -120,7 +123,7 @@ Add to your `~/.codex/config.toml`:
 ```toml
 [mcp_servers.hatago]
 command = "npx"
-args = ["-y", "@himorishige/hatago-mcp-hub", "serve", "--stdio", "--config", "./hatago.config.json"]
+args = ["-y", "@drmikecrowe/hatago-mcp-hub", "serve", "--stdio", "--config", "./hatago.config.json"]
 ```
 
 ### HTTP Mode (StreamableHTTP transport)
@@ -182,7 +185,7 @@ Create a `hatago.config.json`:
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/himorishige/hatago-mcp-hub/main/schemas/config.schema.json",
+  "$schema": "https://raw.githubusercontent.com/drmikecrowe/hatago-mcp-hub/main/schemas/config.schema.json",
   "version": 1,
   "logLevel": "info",
   "mcpServers": {
@@ -313,7 +316,7 @@ Example:
 ### Node.js API
 
 ```typescript
-import { startServer } from '@himorishige/hatago-mcp-hub';
+import { startServer } from '@drmikecrowe/hatago-mcp-hub';
 
 // Start server programmatically
 await startServer({
@@ -326,7 +329,7 @@ await startServer({
 ### Creating Custom Hub
 
 ```typescript
-import { createHub } from '@himorishige/hatago-mcp-hub';
+import { createHub } from '@drmikecrowe/hatago-mcp-hub';
 
 const hub = createHub({
   mcpServers: {
@@ -412,10 +415,10 @@ MIT License
 
 ## Contributing
 
-Contributions are welcome! Please see our [GitHub repository](https://github.com/himorishige/hatago-mcp-hub) for more information.
+Contributions are welcome! Please see our [GitHub repository](https://github.com/drmikecrowe/hatago-mcp-hub) for more information.
 
 ## Links
 
-- [npm Package](https://www.npmjs.com/package/@himorishige/hatago-mcp-hub)
-- [GitHub Repository](https://github.com/himorishige/hatago-mcp-hub)
+- [npm Package](https://www.npmjs.com/package/@drmikecrowe/hatago-mcp-hub)
+- [GitHub Repository](https://github.com/drmikecrowe/hatago-mcp-hub)
 - [MCP Protocol Specification](https://modelcontextprotocol.io/)

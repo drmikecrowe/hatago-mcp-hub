@@ -2,15 +2,30 @@
 
 # 🏮 Hatago MCP Hub
 
-[![npm](https://img.shields.io/npm/v/@himorishige/hatago-mcp-hub?logo=npm&color=cb0000)](https://www.npmjs.com/package/@himorishige/hatago-mcp-hub)
-[![GitHub Release](https://img.shields.io/github/v/release/himorishige/hatago-mcp-hub?display_name=tag&sort=semver)](https://github.com/himorishige/hatago-mcp-hub/releases)
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/himorishige/hatago-mcp-hub)
+[![npm](https://img.shields.io/npm/v/@drmikecrowe/hatago-mcp-hub?logo=npm&color=cb0000)](https://www.npmjs.com/package/@drmikecrowe/hatago-mcp-hub)
+[![GitHub Release](https://img.shields.io/github/v/release/drmikecrowe/hatago-mcp-hub?display_name=tag&sort=semver)](https://github.com/drmikecrowe/hatago-mcp-hub/releases)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/drmikecrowe/hatago-mcp-hub)
 
 > Hatago (旅籠) — A relay point connecting modern AI tools with MCP servers.
+
+> [!NOTE]
+> **This is a fork of [himorishige/hatago-mcp-hub](https://github.com/himorishige/hatago-mcp-hub)**, created by [Hiroshi Morishige (@himorishige)](https://github.com/himorishige). Full credit for Hatago's original design, architecture, and "thin implementation" philosophy belongs to the upstream project — this fork only layers the optional customization features described below on top of it.
+>
+> This work was built on a branch intended for upstream contribution. **If upstream resumes development and adopts these (or equivalent) features, this fork will converge back to track upstream** as the canonical source rather than maintain a permanent divergence.
 
 ## Overview
 
 Hatago MCP Hub is a lightweight hub that unifies access to multiple MCP (Model Context Protocol) servers from tools like Claude Code, Codex CLI, Cursor, Windsurf, and VS Code.
+
+## 🆕 New: Customize Any MCP Server Without Touching It
+
+Hatago now lets you reshape what a connected MCP server exposes and how agents use it — purely at the hub layer, with zero changes to the upstream server:
+
+- **📝 Server Instructions** — Attach an `instructions` string (or file) to any server; Hatago aggregates them into `initialize.instructions` so agents get that guidance automatically at connect time. See [Server Instructions](docs/configuration.md#server-instructions).
+- **🧠 Per-server Skills (`skill://`)** — Drop a `skills` directory on a server and Hatago publishes each one as a `skill://<serverId>/<name>` resource, discoverable by any connecting agent — a lightweight way to teach agents how to use that server. See [Local Skills](docs/configuration.md#local-skills).
+- **🎛️ Tool Filtering & Overrides** — Choose exactly which upstream tools are exposed (`tools.include` / `exclude`) and rename or enrich their descriptions per server (`tools.overrides`), so duplicate or noisy tool sets stay clean in your client's context. See [Tool Filtering and Overrides](docs/configuration.md#tool-filtering-and-overrides).
+
+All three are optional and off by default — existing configs behave exactly as before.
 
 ## Documentation
 
@@ -30,7 +45,7 @@ Hatago MCP Hub is a lightweight hub that unifies access to multiple MCP (Model C
 
 ### 🎯 Simple & Lightweight
 
-- **Zero Configuration Start (HTTP mode)** - `npx @himorishige/hatago-mcp-hub serve --http`
+- **Zero Configuration Start (HTTP mode)** - `npx @drmikecrowe/hatago-mcp-hub serve --http`
 - **Non-invasive to Existing Projects** - Doesn't pollute your project directory
 
 ### 🔌 Rich Connectivity
@@ -103,7 +118,7 @@ Extracted modules for thin hub:
 
 ```
 packages/
-├── mcp-hub/        # Main npm package (@himorishige/hatago-mcp-hub)
+├── mcp-hub/        # Main npm package (@drmikecrowe/hatago-mcp-hub)
 ├── server/         # Server implementation (@himorishige/hatago-server)
 ├── hub/            # Hub core (@himorishige/hatago-hub)
 ├── core/           # Shared types (@himorishige/hatago-core)
@@ -120,21 +135,21 @@ packages/
 
 ```bash
 # Initialize configuration
-npx @himorishige/hatago-mcp-hub init
+npx @drmikecrowe/hatago-mcp-hub init
 
 # Start in STDIO mode (for Claude Code)
 # NOTE: STDIO requires a config file path
-npx @himorishige/hatago-mcp-hub serve --stdio --config ./hatago.config.json
+npx @drmikecrowe/hatago-mcp-hub serve --stdio --config ./hatago.config.json
 
 # Or start in HTTP mode without a config (demo/dev)
-npx @himorishige/hatago-mcp-hub serve --http
+npx @drmikecrowe/hatago-mcp-hub serve --http
 ```
 
 ### Global Installation
 
 ```bash
 # Install globally
-npm install -g @himorishige/hatago-mcp-hub
+npm install -g @drmikecrowe/hatago-mcp-hub
 
 # Use with hatago command
 hatago init
@@ -145,7 +160,7 @@ hatago serve
 
 ```bash
 # Install as dependency
-npm install @himorishige/hatago-mcp-hub
+npm install @drmikecrowe/hatago-mcp-hub
 
 # Add to package.json scripts
 {
@@ -171,7 +186,7 @@ Add to `.mcp.json`:
     "hatago": {
       "command": "npx",
       "args": [
-        "@himorishige/hatago-mcp-hub",
+        "@drmikecrowe/hatago-mcp-hub",
         "serve",
         "--stdio",
         "--config",
@@ -189,7 +204,7 @@ Add to `~/.codex/config.toml`:
 ```toml
 [mcp_servers.hatago]
 command = "npx"
-args = ["-y", "@himorishige/hatago-mcp-hub", "serve", "--stdio", "--config", "./hatago.config.json"]
+args = ["-y", "@drmikecrowe/hatago-mcp-hub", "serve", "--stdio", "--config", "./hatago.config.json"]
 ```
 
 #### HTTP Mode
@@ -254,7 +269,7 @@ Create `hatago.config.json`:
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/himorishige/hatago-mcp-hub/main/schemas/config.schema.json",
+  "$schema": "https://raw.githubusercontent.com/drmikecrowe/hatago-mcp-hub/main/schemas/config.schema.json",
   "version": 1,
   "logLevel": "info",
   "mcpServers": {
@@ -524,7 +539,7 @@ Use `--env-file <path...>` to load variables before config parsing. This helps r
 ### Programmatic API
 
 ```typescript
-import { startServer } from '@himorishige/hatago-mcp-hub';
+import { startServer } from '@drmikecrowe/hatago-mcp-hub';
 
 // Start server programmatically
 await startServer({
@@ -537,7 +552,7 @@ await startServer({
 ### Creating Custom Hub
 
 ```typescript
-import { createHub } from '@himorishige/hatago-mcp-hub';
+import { createHub } from '@drmikecrowe/hatago-mcp-hub';
 
 const hub = createHub({
   mcpServers: {
@@ -619,7 +634,7 @@ hatago status
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please see our [GitHub repository](https://github.com/himorishige/hatago-mcp-hub) for more information.
+Contributions are welcome! Please see our [GitHub repository](https://github.com/drmikecrowe/hatago-mcp-hub) for more information.
 
 ## 📄 License
 
@@ -627,8 +642,8 @@ MIT License
 
 ## 🔗 Links
 
-- [npm Package](https://www.npmjs.com/package/@himorishige/hatago-mcp-hub)
-- [GitHub Repository](https://github.com/himorishige/hatago-mcp-hub)
+- [npm Package](https://www.npmjs.com/package/@drmikecrowe/hatago-mcp-hub)
+- [GitHub Repository](https://github.com/drmikecrowe/hatago-mcp-hub)
 - [MCP Protocol Specification](https://modelcontextprotocol.io/)
 
 ## 🙏 Credits

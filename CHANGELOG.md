@@ -5,6 +5,16 @@ All notable changes to Hatago MCP Hub will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0] - 2026-07-15
+
+### Added
+
+- Per-server `instructions` (string or file), aggregated into `initialize.instructions` at connect time (2KB cap).
+- Per-server `skills` directories, exposed as `skill://<serverId>/<name>` resources.
+- Per-server `tools.include` / `tools.exclude` filtering and `tools.overrides` (rename + description augmentation) applied at registration time.
+
+All new fields are optional and default off; servers with no new config behave exactly as before.
+
 ## [0.0.16] - 2025-09-14
 
 ### Changed
