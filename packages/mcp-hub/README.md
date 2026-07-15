@@ -5,6 +5,9 @@
 
 Unified MCP (Model Context Protocol) Hub for managing multiple MCP servers. Works with Claude Code, Codex CLI, Cursor, Windsurf, VS Code and other MCP-compatible tools.
 
+> [!NOTE]
+> **This is a fork of [himorishige/hatago-mcp-hub](https://github.com/himorishige/hatago-mcp-hub)**, created by [Hiroshi Morishige (@himorishige)](https://github.com/himorishige). Full credit for Hatago's original design, architecture, and "thin implementation" philosophy belongs to the upstream project — this fork only layers optional customization features (server instructions, per-server skills, tool filtering/overrides) on top of it. If upstream adopts these (or equivalent) features, this fork will converge back to track upstream as the canonical source.
+
 ## Quick Start
 
 ```bash

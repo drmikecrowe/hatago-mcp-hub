@@ -8,6 +8,11 @@
 
 > **Hatago (旅籠)** - 江戸時代の宿場町で旅人を泊める宿。現代のAIツールとMCPサーバーをつなぐ中継地点。
 
+> [!NOTE]
+> **本プロジェクトは [himorishige/hatago-mcp-hub](https://github.com/himorishige/hatago-mcp-hub) のフォークです**（作者: [Hiroshi Morishige (@himorishige)](https://github.com/himorishige)）。Hatago のオリジナルの設計・アーキテクチャ・「薄い実装」という思想については、すべて upstream プロジェクトによるものです。本フォークは、その上に下記のオプションのカスタマイズ機能を追加しているに過ぎません。
+>
+> このブランチは、将来的に upstream へのコントリビュートを見据えて作成しました。**もし upstream 側で開発が再開し、これらの機能（またはそれに相当する機能）が採用された場合、本フォークは独自路線を維持せず upstream に追従して収束させます。**
+
 ## 概要
 
 Hatago MCP Hubは、複数のMCP（Model Context Protocol）サーバーを統合管理する軽量なハブサーバーです。Claude Code、Codex CLI、Cursor、Windsurf、VS Codeなどの開発ツールから、さまざまなMCPサーバーを一元的に利用できます。

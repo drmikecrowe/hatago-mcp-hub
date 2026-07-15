@@ -8,6 +8,11 @@
 
 > Hatago (旅籠) — A relay point connecting modern AI tools with MCP servers.
 
+> [!NOTE]
+> **This is a fork of [himorishige/hatago-mcp-hub](https://github.com/himorishige/hatago-mcp-hub)**, created by [Hiroshi Morishige (@himorishige)](https://github.com/himorishige). Full credit for Hatago's original design, architecture, and "thin implementation" philosophy belongs to the upstream project — this fork only layers the optional customization features described below on top of it.
+>
+> This work was built on a branch intended for upstream contribution. **If upstream resumes development and adopts these (or equivalent) features, this fork will converge back to track upstream** as the canonical source rather than maintain a permanent divergence.
+
 ## Overview
 
 Hatago MCP Hub is a lightweight hub that unifies access to multiple MCP (Model Context Protocol) servers from tools like Claude Code, Codex CLI, Cursor, Windsurf, and VS Code.
