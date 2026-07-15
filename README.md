@@ -552,6 +552,59 @@ A server `description` only helps an agent that reads the `hatago://servers` man
 - A `{ file }` path must resolve **within** the config directory; out-of-tree paths are skipped with a warning.
 - See [Server Instructions](docs/configuration.md#server-instructions) for the full contract.
 
+### Putting It Together: Gating an OAuth-Only Remote Server
+
+`url` + `type: "http" | "sse"` only get you so far — Hatago's remote transport forwards a **static** `headers` map (bearer token, API key) and nothing else. It has no OAuth client: no dynamic client registration, no browser consent screen, no token cache. That's fine for servers that accept a fixed credential, but a server that requires interactive OAuth — Atlassian's hosted MCP endpoint is a common example — can't be reached with a bare `url` entry. For those, run the server as a local **process** via `command`/`args` using an OAuth-capable bridge like [`mcp-remote`](https://www.npmjs.com/package/mcp-remote), which owns the browser handshake and caches tokens on disk; Hatago then talks STDIO to that bridge like any other local server.
+
+This is also where `description`, `instructions`, `skills`, and `tools.overrides` stop being independent features and start composing into one routing story for a single high-value server:
+
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/drmikecrowe/hatago-mcp-hub/main/schemas/config.schema.json",
+  "version": 1,
+  "logLevel": "info",
+  "mcpServers": {
+    "confluence-internal": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://mcp.atlassian.com/v1/mcp",
+        "--resource",
+        "https://your-org.atlassian.net"
+      ],
+      "tags": ["atlassian", "confluence", "confluence-internal"],
+      "description": "Internal engineering Confluence (your-org.atlassian.net) — team documentation, onboarding, architecture, and processes. Read-only. ALWAYS invoke the kb-router skill first — it maps intent to the exact right page without manual searching.",
+      "instructions": "When answering a question that internal documentation might cover, read the kb-router resource before calling any confluence-internal tool: ListMcpResourcesTool(server=\"confluence-internal\") → URI skill://confluence-internal/kb-router. Follow its instructions. Use confluence-internal search/fetch tools only when the router explicitly falls back to them.",
+      "skills": "./skills",
+      "tools": {
+        "include": ["fetch", "search", "getConfluencePage", "getConfluenceSpaces", "searchConfluenceUsingCql"],
+        "overrides": {
+          "search": {
+            "name": "searchInternal",
+            "description": "REQUIRED: Read the kb-router resource first: ListMcpResourcesTool(server=\"confluence-internal\"). Only use this tool as a fallback if the skill instructs it. {description}"
+          },
+          "fetch": {
+            "name": "fetchInternal",
+            "description": "Retrieves from the internal engineering Confluence instance. {description}"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+What each layer buys you, in the order an agent actually hits them:
+
+1. **`command`/`args` (mcp-remote)** — the only way in, because the upstream needs a real OAuth flow Hatago itself can't perform.
+2. **`description`** — read passively via `hatago://servers`; tells an agent *that* this server exists and what it's authoritative for, before any tool call.
+3. **`instructions`** — pushed into `initialize.instructions` at connect, so the agent is told *up front*, without reading the manifest, to check the router skill before calling tools.
+4. **`skills`** — the actual routing logic (which page answers which kind of question) lives in a `skill://confluence-internal/kb-router` resource, pulled on demand instead of bloating the 2KB instructions budget.
+5. **`tools.overrides`** — renames the generic `search`/`fetch` tools to `searchInternal`/`fetchInternal` and rewrites their descriptions to repeat the "read the router first" gate at the point the model is about to call them — the last line of defense if it skipped steps 2–4.
+
+None of this is Hatago making decisions on the server's behalf — it's config-only routing metadata layered on a plain passthrough connection, consistent with Hatago's ["thin implementation" philosophy](#-hatago-mcp-hub) (see the note at the top of this README).
+
 ### Environment Variable Expansion
 
 Supports Claude Code compatible syntax:
