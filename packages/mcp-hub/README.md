@@ -8,6 +8,16 @@ Unified MCP (Model Context Protocol) Hub for managing multiple MCP servers. Work
 > [!NOTE]
 > **This is a fork of [himorishige/hatago-mcp-hub](https://github.com/himorishige/hatago-mcp-hub)**, created by [Hiroshi Morishige (@himorishige)](https://github.com/himorishige). Full credit for Hatago's original design, architecture, and "thin implementation" philosophy belongs to the upstream project — this fork only layers optional customization features (server instructions, per-server skills, tool filtering/overrides) on top of it. If upstream adopts these (or equivalent) features, this fork will converge back to track upstream as the canonical source.
 
+## Customize Any MCP Server Without Touching It
+
+Hatago lets you reshape what a connected MCP server exposes and how agents use it — purely at the hub layer, with zero changes to the upstream server:
+
+- **Per-server Skills (`skill://`)** — Drop a `skills` directory on a server and Hatago publishes each one as a `skill://<serverId>/<name>` resource, discoverable by any connecting agent. See [Per-Server Skills](#per-server-skills) below.
+- **Server Instructions** — Attach an `instructions` string (or file) to any server; Hatago aggregates them into `initialize.instructions` so agents get that guidance automatically at connect time. See [Server Instructions](#server-instructions) below.
+- **Tool Filtering & Overrides** — Choose exactly which upstream tools are exposed (`tools.include` / `exclude`) and rename or enrich their descriptions per server (`tools.overrides`). See [Per-Server Tool Filtering](#per-server-tool-filtering) below.
+
+All three are optional and off by default — existing configs behave exactly as before.
+
 ## Quick Start
 
 ```bash
@@ -224,7 +234,145 @@ Create a `hatago.config.json`:
 }
 ```
 
-### OAuth-Only Remote Servers (`mcp-remote`)
+### Per-Server Tool Filtering
+
+Some MCP servers expose many tools, all of which land in your client's context. Use the optional `tools` field on any server to expose only the tools you actually use. Filtering is by the server's **original** tool name (before Hatago prefixing) and happens at registration, so hidden tools never enter context and are not invocable.
+
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/drmikecrowe/hatago-mcp-hub/main/schemas/config.schema.json",
+  "mcpServers": {
+    "atlassian": {
+      "url": "https://mcp.atlassian.com/v1/sse",
+      "type": "sse",
+      "tools": {
+        "include": ["getJiraIssue", "searchJiraIssues", "createJiraIssue"]
+      }
+    },
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "tools": {
+        "exclude": ["delete_repository"]
+      }
+    }
+  }
+}
+```
+
+- `include` — expose only these tools (allow-list). Omit to start from all tools.
+- `exclude` — hide these tools (deny-list).
+- If both are set, `exclude` is applied after `include`, so **exclude wins**.
+- Omitting `tools` entirely exposes all of the server's tools (unchanged default).
+
+### Per-Server Tool Overrides
+
+When you attach **two instances of the same server** (e.g. two Atlassian servers pointing at different Confluence instances), Hatago already keeps their tools from colliding by prefixing each with the server id (`serverId_toolName`). But the two instances still expose identical descriptions, so an LLM can't tell them apart. Use `tools.overrides` — keyed by the **original** tool name — to rename a tool and/or rewrite its description per instance:
+
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/drmikecrowe/hatago-mcp-hub/main/schemas/config.schema.json",
+  "mcpServers": {
+    "confluence-internal": {
+      "command": "npx",
+      "args": ["-y", "mcp-atlassian"],
+      "tools": {
+        "overrides": {
+          "createConfluencePage": {
+            "name": "create_internal_page",
+            "description": "For the INTERNAL engineering Confluence. {description}"
+          }
+        }
+      }
+    },
+    "confluence-customer": {
+      "command": "npx",
+      "args": ["-y", "mcp-atlassian"],
+      "tools": {
+        "overrides": {
+          "createConfluencePage": {
+            "name": "create_customer_page",
+            "description": "For the CUSTOMER-facing Confluence instance. {description}"
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+- `name` — renames the exposed tool. The server-id prefix is still applied, so the result is `serverId_<name>` (e.g. `confluence_customer_create_customer_page`). Omit to keep the original name.
+- `description` — a **template**: the placeholder `{description}` expands to the tool's upstream description, letting you _augment_ it (`"For the INTERNAL Confluence. {description}"`). A string with no placeholder fully replaces the description. Omit to keep the upstream text unchanged.
+- Overrides are metadata only — the tool is still relayed to the underlying server under its original name.
+- Combine with `include` / `exclude`: filtering runs first, then overrides apply to whatever remains.
+
+### Per-Server Skills
+
+A **skill** is a markdown document that Hatago binds to one MCP server and exposes to connecting agents as a `skill://<serverId>/<name>` resource — discoverable via `resources/list` with no server call required. Use it for guidance on _how to use_ a particular server (a routing guide, a reference doc, worked examples).
+
+Point a server's `skills` field at a directory:
+
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/drmikecrowe/hatago-mcp-hub/main/schemas/config.schema.json",
+  "mcpServers": {
+    "confluence-primary": {
+      "url": "https://example.atlassian.net/mcp",
+      "type": "sse",
+      "skills": "./skills/confluence-primary"
+    }
+  }
+}
+```
+
+Each skill is either a flat `<dir>/<name>.md` file or a `<dir>/<name>/SKILL.md` directory (the Claude Code convention), with required YAML frontmatter:
+
+```markdown
+---
+name: kb-router
+description: Routes strategy questions to the primary knowledge base. Read first when unsure which Atlassian server to search.
+---
+
+# Knowledge Base Router
+
+For anything about product strategy or the platform, search this server first...
+```
+
+- Skills are namespaced per server (`skill://confluence-primary/kb-router`), so two servers can reuse the same skill name without collision.
+- They share their server's lifecycle — registered on connect, removed on disconnect/disable/`--tags` filter-out.
+- The `skills` path must resolve **within** the config directory (symlinks are followed, so an external directory can be linked in).
+- See [docs/configuration.md](https://github.com/drmikecrowe/hatago-mcp-hub/blob/main/docs/configuration.md#local-skills) for the full contract.
+
+### Server Instructions
+
+A server `description` only helps an agent that reads the `hatago://servers` manifest. To **push** guidance to the agent at connect time instead, set the optional `instructions` field on any server — Hatago aggregates every active server's instructions into its own `initialize.instructions` (Claude Code loads this at session start, same as a system-prompt addition).
+
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/drmikecrowe/hatago-mcp-hub/main/schemas/config.schema.json",
+  "mcpServers": {
+    "confluence-primary": {
+      "url": "https://example.atlassian.net/mcp",
+      "type": "sse",
+      "instructions": "For product-strategy or platform questions, search this server first — see the kb-router skill for detailed routing rules.",
+      "skills": "./skills/confluence-primary"
+    },
+    "jira": {
+      "url": "https://example.atlassian.net/mcp",
+      "type": "sse",
+      "instructions": { "file": "./instructions/jira.md" }
+    }
+  }
+}
+```
+
+- Accepts a literal string or a `{ "file": "..." }` reference, resolved against the config file's directory.
+- **Use it to redirect, not to duplicate.** Instructions share Claude Code's 2KB *aggregate* budget across every active server, while skills are only loaded when an agent reads them. Keep the instructions text itself to a one-line pointer, and put the actual detail in the skill.
+- **2KB aggregate budget, enforced.** Hatago fails startup with an error if the combined text exceeds that, rather than silently truncating.
+- A `{ file }` path must resolve **within** the config directory; out-of-tree paths are skipped with a warning.
+- See [docs/configuration.md](https://github.com/drmikecrowe/hatago-mcp-hub/blob/main/docs/configuration.md#server-instructions) for the full contract.
+
+### Putting It Together: Gating an OAuth-Only Remote Server
 
 `url`/`type: "http" | "sse"` only forwards a **static** `headers` map (bearer token, API key) — Hatago has no OAuth client (no dynamic client registration, no browser consent, no token cache). A remote MCP server that requires interactive OAuth, such as Atlassian's hosted MCP endpoint, can't be reached with a bare `url` entry. Bridge it instead by running [`mcp-remote`](https://www.npmjs.com/package/mcp-remote) as a local process via `command`/`args`; it owns the OAuth handshake and token cache, and Hatago talks STDIO to it like any other local server:
 
