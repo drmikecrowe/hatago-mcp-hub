@@ -1,6 +1,6 @@
 {
-  "name": "@himorishige/hatago-mcp-hub",
-  "mcpName": "io.github.himorishige/hatago-mcp-hub",
+  "name": "@drmikecrowe/hatago-mcp-hub",
+  "mcpName": "io.github.drmikecrowe/hatago-mcp-hub",
   "version": "0.1.0",
   "description": "Unified MCP Hub for managing multiple Model Context Protocol servers",
   "type": "module",
@@ -90,10 +90,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/himorishige/hatago-mcp-hub.git"
+    "url": "https://github.com/drmikecrowe/hatago-mcp-hub.git"
   },
   "bugs": {
-    "url": "https://github.com/himorishige/hatago-mcp-hub/issues"
+    "url": "https://github.com/drmikecrowe/hatago-mcp-hub/issues"
   },
-  "homepage": "https://github.com/himorishige/hatago-mcp-hub#readme"
+  "homepage": "https://github.com/drmikecrowe/hatago-mcp-hub#readme"
 }

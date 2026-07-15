@@ -10,11 +10,11 @@ Hatago MCP Hub uses a JSON configuration file to manage MCP server connections. 
 
 ```bash
 # Interactive mode selection
-npx @himorishige/hatago-mcp-hub init
+npx @drmikecrowe/hatago-mcp-hub init
 
 # Or specify mode directly
-npx @himorishige/hatago-mcp-hub init --mode stdio  # For Claude Code
-npx @himorishige/hatago-mcp-hub init --mode http   # For debugging
+npx @drmikecrowe/hatago-mcp-hub init --mode stdio  # For Claude Code
+npx @drmikecrowe/hatago-mcp-hub init --mode http   # For debugging
 ```
 
 ### Configuration File Location
@@ -31,7 +31,7 @@ The configuration file can be specified via:
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/himorishige/hatago-mcp-hub/main/schemas/config.schema.json",
+  "$schema": "https://raw.githubusercontent.com/drmikecrowe/hatago-mcp-hub/main/schemas/config.schema.json",
   "version": 1,
   "logLevel": "info",
   "mcpServers": {
@@ -658,7 +658,7 @@ Management components are available under `@himorishige/hatago-hub-management/*`
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/himorishige/hatago-mcp-hub/main/schemas/config.schema.json",
+  "$schema": "https://raw.githubusercontent.com/drmikecrowe/hatago-mcp-hub/main/schemas/config.schema.json",
   "version": 1,
   "logLevel": "debug",
   "mcpServers": {
@@ -954,7 +954,7 @@ Always include the schema URL:
 
 ```json
 {
-  "$schema": "https://raw.githubusercontent.com/himorishige/hatago-mcp-hub/main/schemas/config.schema.json",
+  "$schema": "https://raw.githubusercontent.com/drmikecrowe/hatago-mcp-hub/main/schemas/config.schema.json",
   "version": 1
 }
 ```
@@ -1083,6 +1083,6 @@ Key changes:
 
 ## Additional Resources
 
-- [JSON Schema](https://raw.githubusercontent.com/himorishige/hatago-mcp-hub/main/schemas/config.schema.json)
-- [Example Configurations](https://github.com/himorishige/hatago-mcp-hub/tree/main/schemas)
+- [JSON Schema](https://raw.githubusercontent.com/drmikecrowe/hatago-mcp-hub/main/schemas/config.schema.json)
+- [Example Configurations](https://github.com/drmikecrowe/hatago-mcp-hub/tree/main/schemas)
 - [MCP Protocol Documentation](https://modelcontextprotocol.io/)
